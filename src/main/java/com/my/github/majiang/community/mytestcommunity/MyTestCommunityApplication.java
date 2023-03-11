@@ -13,7 +13,6 @@ public class MyTestCommunityApplication {
     public static void main(String[] args) {
         SpringApplication.run(MyTestCommunityApplication.class, args);
 //        System.setProperty("javax.Net.ssl.trustStore", "D:\\code\\github-code\\my-test-community\\jssecacerts");
-
     }
 
 }
