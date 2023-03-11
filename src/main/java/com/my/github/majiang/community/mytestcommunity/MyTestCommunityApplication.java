@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * todo 解决 sun.security.provider.certpath.SunCertPathBuilderException
  * -- 此方法未用到 okhttp
  * */
+//@MapperScan(value = "com.my.github.majiang.community.mytestcommunity")
 @SpringBootApplication
 public class MyTestCommunityApplication {
 

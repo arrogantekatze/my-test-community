@@ -4,13 +4,17 @@ import com.alibaba.fastjson.JSON;
 import com.my.github.majiang.community.mytestcommunity.dto.AccessTokenDTO;
 import com.my.github.majiang.community.mytestcommunity.dto.TokenRspDTO;
 import com.my.github.majiang.community.mytestcommunity.dto.UserRspDTO;
+import com.my.github.majiang.community.mytestcommunity.mapper.UserMapper;
+import com.my.github.majiang.community.mytestcommunity.model.User;
 import com.my.github.majiang.community.mytestcommunity.util.MyHttpUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -19,14 +23,15 @@ import java.util.UUID;
 public class AuthorizeController {
 
     @Autowired
-    MyHttpUtils utils;
+    private MyHttpUtils utils;
+
+    @Autowired
+    public UserMapper userMapper;
 
     @Value("${github.client.id}")
     private String clientId;
-
     @Value("${github.clinet.secret}")
     private String clientSecret;
-
     @Value("${github.redirect.uri}")
     private String redirectUri;
 
@@ -35,7 +40,9 @@ public class AuthorizeController {
 
     @GetMapping("/callback")
     public String callback(@RequestParam("code") String code,
-                           @RequestParam("state") String state){
+                           @RequestParam("state") String state,
+                           HttpServletRequest request
+    ){
         try {
             AccessTokenDTO accessToken = new AccessTokenDTO()
                     .setClient_id(clientId)
@@ -44,19 +51,30 @@ public class AuthorizeController {
                     .setCode(code);
             String rspToken = utils.post("https://github.com/login/oauth/access_token",
                     JSON.toJSONString(accessToken));
-            System.out.println(rspToken);
             TokenRspDTO tokenRsp = JSON.parseObject(rspToken, TokenRspDTO.class);
-//            String[] params = rsp.split("&");
-//            String token = params[0].replace("access_token=","");
             String token = tokenRsp.getAccess_token();
+
             String rspUser = utils.get("https://api.github.com/user",
                     "{}","Authorization","token "+token);
             UserRspDTO userRsp = JSON.parseObject(rspUser, UserRspDTO.class);
-            System.out.println(userRsp);
+
+            if(userRsp!= null){
+                // 登录成功 写 session
+                User user = new User()
+                        .setToken(String.valueOf(UUID.randomUUID()))
+                        .setName(userRsp.getName())
+                        .setAccountId(userRsp.getLogin())
+                        .setCreateTime(new Timestamp(System.currentTimeMillis()))
+                        .setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                userMapper.insert(user);
+                request.getSession().setAttribute("user",userRsp);
+            }else {
+                // 登录失败 重新登录
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "index";
+        return "redirect:/";
     }
 
 }
