@@ -7,7 +7,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class UserRspDTO {
     String login;
-    long id;
+    Long id;
     String name;
 
     @Override

@@ -61,7 +61,7 @@ public class AuthorizeController {
                     "{}","Authorization","token "+token);
             UserRspDTO userRsp = JSON.parseObject(rspUser, UserRspDTO.class);
 
-            if(userRsp!= null){
+            if(userRsp!= null && userRsp.getId()!=null){
                 // 登录成功
                 String uuidToken = String.valueOf(UUID.randomUUID());
                 User user = new User()
