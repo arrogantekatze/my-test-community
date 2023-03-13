@@ -14,7 +14,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.UUID;
@@ -41,7 +43,8 @@ public class AuthorizeController {
     @GetMapping("/callback")
     public String callback(@RequestParam("code") String code,
                            @RequestParam("state") String state,
-                           HttpServletRequest request
+                           HttpServletRequest request,
+                           HttpServletResponse response
     ){
         try {
             AccessTokenDTO accessToken = new AccessTokenDTO()
@@ -59,15 +62,17 @@ public class AuthorizeController {
             UserRspDTO userRsp = JSON.parseObject(rspUser, UserRspDTO.class);
 
             if(userRsp!= null){
-                // 登录成功 写 session
+                // 登录成功
+                String uuidToken = String.valueOf(UUID.randomUUID());
                 User user = new User()
-                        .setToken(String.valueOf(UUID.randomUUID()))
+                        .setToken(uuidToken)
                         .setName(userRsp.getName())
                         .setAccountId(userRsp.getLogin())
                         .setCreateTime(new Timestamp(System.currentTimeMillis()))
                         .setUpdateTime(new Timestamp(System.currentTimeMillis()));
                 userMapper.insert(user);
-                request.getSession().setAttribute("user",userRsp);
+                // 写 cookie 和 session
+                response.addCookie(new Cookie("token",uuidToken));
             }else {
                 // 登录失败 重新登录
             }
